@@ -1,0 +1,37 @@
+# .github/workflows/ping-mongo.yml
+name: Ping MongoDB
+
+on:
+  schedule:
+    # Run every 30 minutes
+    - cron: '*/30 * * * *'
+
+jobs:
+  ping:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Set up Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: '20'
+
+      - name: Ping MongoDB
+        run: |
+          node -e "
+          const { MongoClient } = require('mongodb');
+          const uri = process.env.MONGO_URI;
+          const client = new MongoClient(uri);
+          (async () => {
+            try {
+              await client.connect();
+              await client.db('admin').command({ ping: 1 });
+              console.log('MongoDB ping successful!');
+            } catch (err) {
+              console.error('MongoDB ping failed:', err);
+            } finally {
+              await client.close();
+            }
+          })();
+          "
+        env:
+          MONGO_URI: ${{ secrets.MONGO_URI }}
